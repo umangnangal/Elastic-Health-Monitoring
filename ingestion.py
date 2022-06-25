@@ -1,12 +1,18 @@
 import time
 from elasticsearch import Elasticsearch, helpers
 import warnings
+import pandas as pd
 warnings.filterwarnings('ignore')
 
-es_remote = Elasticsearch(['10.127.122.198'], 
-                   port = 60500,
+# es_remote = Elasticsearch(['10.127.122.198'], 
+#                    port = 60500,
+#                    verify_certs = False,
+#                    use_ssl = True)
+
+es_remote = Elasticsearch(['127.0.0.1'], 
+                   port = 33500,
                    verify_certs = False,
-                   use_ssl = True)
+                   use_ssl = False)
 
 if not es_remote.ping():
     print("Cannot connect to Elastic")
@@ -30,8 +36,12 @@ def main():
     start = time.time()
     while True:
         thread_pool_data = es_remote.cat.thread_pool(format = 'json')
-        search_pool_info = thread_pool_data[13]
-        write_pool_info = thread_pool_data[19]
+        df = pd.DataFrame(thread_pool_data)
+
+        df = df.loc[df.name.isin(['search', 'write'])]
+
+        search_pool_info = df.loc[df.name == 'search'].to_records(index=False)[0]
+        write_pool_info = df.loc[df.name == 'write'].to_records(index=False)[0]
 
         jvm_data = es_remote.nodes.stats(metric = ["jvm"])
         node = list(jvm_data["nodes"].keys())[0]
@@ -47,10 +57,11 @@ def main():
             "write_rejected": write_pool_info['rejected'],
             "heap_used_percentage": jvm_mem_info['heap_used_percent']
         }
+        # print(es_doc)
 
         es_doc_list.append(es_doc.copy())
-#         time.sleep(1)
-        if len(es_doc_list) >= 100:
+
+        if len(es_doc_list) >= 10:
             response = helpers.bulk(es_local, bulk_baseline_data('health_monitoring', es_doc_list))
             es_doc_list.clear()
             print("Pushed {} records to elastic db for a time duration of  {} seconds".format(response[0], time.time()-start))
