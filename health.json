@@ -7,39 +7,39 @@
         }
     },
     "mappings":{
-            "properties": {
-                "timestamp": {
-                    "type": "date",
-                    "format": "epoch_second"
-                },
-                "search_active": {
-                    "index": false,
-                    "type": "integer"
-                },
-                "search_queue": {
-                    "index": false,
-                    "type": "integer"
-                },
-                "search_rejected": {
-                    "index": false,
-                    "type": "integer"
-                },
-                "write_active": {
-                    "index": false,
-                    "type": "integer"
-                },
-                "write_queue": {
-                    "index": false,
-                    "type": "integer"
-                },
-                "write_rejected": {
-                    "index": false,
-                    "type": "integer"
-                },
-                "heap_used_percentage": {
-                    "index": false,
-                    "type": "integer"
-                }
+        "properties": {
+            "timestamp": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+            },
+            "search_active": {
+                "index": false,
+                "type": "integer"
+            },
+            "search_queue": {
+                "index": false,
+                "type": "integer"
+            },
+            "search_rejected": {
+                "index": false,
+                "type": "integer"
+            },
+            "write_active": {
+                "index": false,
+                "type": "integer"
+            },
+            "write_queue": {
+                "index": false,
+                "type": "integer"
+            },
+            "write_rejected": {
+                "index": false,
+                "type": "integer"
+            },
+            "heap_used_percentage": {
+                "index": false,
+                "type": "integer"
             }
+        }
     }
 }

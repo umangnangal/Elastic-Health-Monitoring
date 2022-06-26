@@ -1,26 +1,11 @@
 import time
 from elasticsearch import Elasticsearch, helpers
-import warnings
 import pandas as pd
-warnings.filterwarnings('ignore')
-
-# es_remote = Elasticsearch(['10.127.122.198'], 
-#                    port = 60500,
-#                    verify_certs = False,
-#                    use_ssl = True)
-
-es_remote = Elasticsearch(['127.0.0.1'], 
-                   port = 33500,
-                   verify_certs = False,
-                   use_ssl = False)
-
-if not es_remote.ping():
-    print("Cannot connect to Elastic")
     
 es_local = Elasticsearch()
 
 if not es_local.ping():
-    print("Cannot connect to Elastic")
+    print("Cannot connect to local Elastic")
     
 def bulk_baseline_data(index, mlist):
     for m in mlist:
@@ -31,9 +16,14 @@ def bulk_baseline_data(index, mlist):
             "_source": m,
         }
         
-def main():
+def elastic_health_monitoring(host, port):
     es_doc_list = []
     start = time.time()
+
+    # esdb_url = "http://{}:{}".format(args.host, args.port)
+    es_remote = Elasticsearch([{"host": host, "port": port}])
+    if not es_remote.ping():
+        print("Cannot connect to remote Elastic")
     while True:
         thread_pool_data = es_remote.cat.thread_pool(format = 'json')
         df = pd.DataFrame(thread_pool_data)
@@ -48,7 +38,7 @@ def main():
         jvm_mem_info = jvm_data["nodes"][node]["jvm"]["mem"]
 
         es_doc = {
-            "timestamp": time.time(),
+            "timestamp": int(time.time()*1000),
             "search_active": search_pool_info['active'],
             "search_queue": search_pool_info['queue'],
             "search_rejected": search_pool_info['rejected'],
@@ -61,12 +51,8 @@ def main():
 
         es_doc_list.append(es_doc.copy())
 
-        if len(es_doc_list) >= 10:
+        if len(es_doc_list) >= 20:
             response = helpers.bulk(es_local, bulk_baseline_data('health_monitoring', es_doc_list))
             es_doc_list.clear()
             print("Pushed {} records to elastic db for a time duration of  {} seconds".format(response[0], time.time()-start))
             start = time.time()
-        
-if __name__ == "__main__":
-    main()
-        
